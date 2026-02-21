@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <div style="display: flex; justify-content: center; align-items: center; width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); border-radius: 24px; margin: 0 auto 20px auto; box-shadow: 0 10px 30px -10px rgba(255, 107, 107, 0.5);">
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg>
+  </div>
+  
+  <h1>💸 HarnTung (หารตังค์)</h1>
+  <p><strong>แอปพลิเคชันจัดการค่าใช้จ่ายแสนฉลาด ทริปไหน ปาร์ตี้ไหน ก็ไม่ปวดหัวเรื่องหารเงินอีกต่อไป</strong></p>
 
-## Getting Started
+  <p>
+    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16.1-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
+    <a href="https://supabase.com/"><img src="https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-Ready-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  </p>
+</div>
 
-First, run the development server:
+<br />
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ ฟีเจอร์หลัก (Key Features)
+
+- **⚖️ หารได้ 3 แบบไร้ข้อจำกัด:** ตอบโจทย์ทุกการใช้จ่ายด้วยการ *หารเท่าปกติ*, *เลือกคนที่จะหารร่วมกัน*, หรือ *ระบุยอดเงินของแต่ละคนเจาะจงลงไปเลย*
+- **🧹 Debt Simplification:** ระบบคำนวณและรวบยอดหนี้อัตโนมัติ ช่วยลดการโอนเงินไปมาที่ซับซ้อน (Transaction) ระหว่างเพื่อนๆ ให้น้อยที่สุดเท่าที่จะเป็นไปได้
+- **📱 สแกนปุ๊บ โอนปั๊บ (QR PromptPay):** สรุปยอดเคลียร์บิลและสร้าง **QR Code พร้อมจำนวนเงิน** ให้ทันที ไม่ต้องถามเลขบัญชี ไม่ต้องพิมพ์ยอดเอง โอนตรงเป๊ะ
+- **🤝 เพิ่มเพื่อนได้อิสระ:** รองรับสมาชิกในวงได้ไม่จำกัด เพิ่มลบสมาชิกได้ตลอดเวลา
+
+<br />
+
+## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
+
+### Frontend & UI
+- **[Next.js 16](https://nextjs.org/) (App Router)** & **React 19**
+- **[Tailwind CSS v4](https://tailwindcss.com/)** สไตล์ใหม่สวยงาม
+- **[Lucide React](https://lucide.dev/)** ชุดไอคอนมินิมอล
+- **[qrcode](https://www.npmjs.com/package/qrcode)** สำหรับการช่วยแปลงข้อมูล PromptPay ลงเป็นภาพ QR Canvas
+
+### Cloud & Database
+- **[Supabase](https://supabase.com/)** Database (PostgreSQL) พร้อม Realtime Capabilities
+
+<br />
+
+## 🛠 วิธีติดตั้งและเริ่มต้นใช้งาน (Getting Started)
+
+### สิ่งที่ต้องเตรียม (Prerequisites)
+- [Node.js](https://nodejs.org/) (เวอร์ชัน 20 ขึ้นไป)
+- บัญชี [Supabase](https://supabase.com/)
+
+### ขั้นตอนติดตั้ง
+
+1. **โคลนโปรเจกต์ (Clone Repository)**
+   ```bash
+   git clone https://github.com/your-username/harntung.git
+   cd harntung
+   ```
+
+2. **ติดตั้ง Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **ตั้งค่าตัวแปรระบบ (Environment Variables)**
+   สร้างไฟล์ `.env.local` ไว้ที่ root directory ของโปรเจกต์ นำ URL และ ANON KEY จากโปรเจกต์ใน Supabase มาใส่:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **ปรับฐานข้อมูล Supabase**
+   ในโหมด SQL Editor ของ Supabase คุณจะต้องมีตารางหลักๆ คือ:
+   - `events` (เก็บรายชื่อวง)
+   - `members` (เก็บข้อมูลคนในวงและ promptpay_id)
+   - `expenses` (เก็บรายการค่าใช้จ่ายและวิธีการหาร)
+   - `expense_splits` (เก็บข้อมูลจำนวนเงินที่แต่ละคนต้องจ่ายต่อหนึ่งรายการ)
+
+5. **รันเซิร์ฟเวอร์ (Development Server)**
+   ```bash
+   npm run dev
+   ```
+   จากนั้นเปิดบราวเซอร์ไปที่ [http://localhost:3000](http://localhost:3000) ก็พร้อมใช้งานได้เลย!
+
+<br />
+
+## 📁 โครงสร้างโปรเจกต์ที่สำคัญ (Project Structure)
+
+```text
+src/
+├── app/                  
+│   ├── event/[id]/       # หน้าหลักของอีเวนต์ แสดงสมาชิกและรายจ่าย
+│   │   └── settle/       # หน้า Dashboard สำหรับดู "ใครโอนให้ใคร" และสร้าง QR
+│   ├── globals.css       # Stylesheets หลักและ Tailwind configs
+│   └── page.tsx          # Landing page สร้างวงใหม่
+├── components/           # ส่วนประกอบ UI (Components)
+│   ├── AddExpenseModal.tsx # ป๊อปอัพเพิ่มค่าใช้จ่าย (ตรรกะวิธีหารเงินต่างๆ จะเปิดตรงนี้)
+│   ├── MemberList.tsx    # List จัดการสมาชิกและการตั้งค่า PromptPay ผูกชื่อ
+│   └── QRCode.tsx        # ระบบวาด QR Code ผ่าน HTML Canvas
+└── lib/                  # ระบบหลังบ้านและ Utility Functions
+    ├── promptpay.ts      # Engine แปลงรูปแบบตัวเลขสู่ PromptPay Payload แบบมาตรฐานไทย
+    ├── settle.ts         # Algorithm ลับที่ช่วยเกลี่ยหนี้เพื่อนๆ ให้จ่ายกันน้อยครั้งที่สุด
+    ├── supabase.ts       # การเชื่อมต่อฐานข้อมูล
+    └── types.ts          # Type Declaration ทั้งหมด
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+<br />
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🤝 การมีส่วนร่วม (Contributing)
+โปรเจกต์นี้เปิดกว้างมาก! หากพบปัญหา อยากแนะนำฟีเจอร์เพิ่ม หรือเอาไปต่อยอด สามารถเปิด [Issues](https://github.com/your-username/harntung/issues) หรือสร้าง [Pull Request](https://github.com/your-username/harntung/pulls) มาได้เลยครับ 
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📜 License
+สงวนสิทธิ์แบบ Open-source **[MIT License](LICENSE)** นำไปดัดแปลงและต่อยอดได้อย่างอิสระ
