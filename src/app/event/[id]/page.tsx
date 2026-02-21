@@ -7,6 +7,9 @@ import type { Event, Member, Expense, ExpenseSplit } from '@/lib/types';
 import MemberList from '@/components/MemberList';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import { ArrowLeft, Plus, Receipt, Users, TrendingUp, Share2, Trash2, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
+import { createClerkSupabaseClient } from '@/lib/supabaseClient';
 
 const SPLIT_LABELS: Record<string, string> = {
     equal: 'หารเท่า',
@@ -17,6 +20,7 @@ const SPLIT_LABELS: Record<string, string> = {
 export default function EventPage() {
     const params = useParams();
     const router = useRouter();
+    const { getToken } = useAuth();
     const eventId = params.id as string;
 
     const [event, setEvent] = useState<Event | null>(null);
@@ -52,28 +56,58 @@ export default function EventPage() {
     useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleAddMember = async (name: string, promptpayId?: string) => {
-        const { error } = await supabase.from('members').insert({
+        const token = await getToken({ template: 'supabase' });
+        if (!token) { toast.error('กรุณาเข้าสู่ระบบก่อน'); return; }
+        const supabaseAuth = createClerkSupabaseClient(token);
+
+        const { error } = await supabaseAuth.from('members').insert({
             event_id: eventId,
             name,
             promptpay_id: promptpayId || null,
         });
-        if (!error) fetchData();
+        if (!error) {
+            toast.success(`เพิ่ม ${name} สำเร็จ`);
+            fetchData();
+        } else {
+            toast.error('เพิ่มสมาชิกล้มเหลว');
+        }
     };
 
     const handleRemoveMember = async (id: string) => {
+        const token = await getToken({ template: 'supabase' });
+        if (!token) { toast.error('กรุณาเข้าสู่ระบบก่อน'); return; }
+        const supabaseAuth = createClerkSupabaseClient(token);
+
         // ห้ามลบถ้ามีรายจ่ายหรือ split ผูกอยู่
         const isUsed = expenses.some((e) => e.paid_by === id) || splits.some((s) => s.member_id === id);
         if (isUsed) { alert('ไม่สามารถลบสมาชิกที่เกี่ยวข้องกับค่าใช้จ่ายได้'); return; }
-        const { error } = await supabase.from('members').delete().eq('id', id);
-        if (!error) fetchData();
+        const { error } = await supabaseAuth.from('members').delete().eq('id', id);
+        if (!error) {
+            toast.success('ลบสมาชิกแล้ว');
+            fetchData();
+        } else {
+            toast.error('เกิดข้อผิดพลาดในการลบสมาชิก');
+        }
     };
 
     const handleDeleteExpense = async (expenseId: string) => {
         if (!confirm('ลบรายการนี้?')) return;
         // ต้องลบ splits ก่อนเพราะ FK constraint
-        await supabase.from('expense_splits').delete().eq('expense_id', expenseId);
-        await supabase.from('expenses').delete().eq('id', expenseId);
-        fetchData();
+
+        const token = await getToken({ template: 'supabase' });
+        if (!token) { toast.error('กรุณาเข้าสู่ระบบก่อน'); return; }
+        const supabaseAuth = createClerkSupabaseClient(token);
+
+        const loadingToastId = toast.loading('กำลังลบรายการ...');
+        try {
+            await supabaseAuth.from('expense_splits').delete().eq('expense_id', expenseId);
+            await supabaseAuth.from('expenses').delete().eq('id', expenseId);
+            toast.success('ลบรายการค่าใช้จ่ายแล้ว', { id: loadingToastId });
+            fetchData();
+        } catch (error) {
+            toast.error('ลบรายการไม่สำเร็จ', { id: loadingToastId });
+            console.error('Error deleting expense:', error);
+        }
     };
 
     const handleShare = async () => {
@@ -81,6 +115,7 @@ export default function EventPage() {
         try {
             await navigator.clipboard.writeText(url);
             setCopied(true);
+            toast.success('คัดลอกลิงก์เรียบร้อยแล้ว');
             setTimeout(() => setCopied(false), 2000);
         } catch {
             prompt('คัดลอกลิงก์นี้:', url);
@@ -165,10 +200,21 @@ export default function EventPage() {
                                 ค่าใช้จ่าย
                             </h3>
                             {members.length >= 2 && (
-                                <button className="btn-primary px-4 py-2 text-xs flex items-center gap-1.5" onClick={() => setShowAddExpense(true)}>
-                                    <Plus size={14} />
-                                    เพิ่ม
-                                </button>
+                                <>
+                                    <SignedIn>
+                                        <button className="btn-primary px-4 py-2 text-xs flex items-center gap-1.5" onClick={() => setShowAddExpense(true)}>
+                                            <Plus size={14} />
+                                            เพิ่ม
+                                        </button>
+                                    </SignedIn>
+                                    <SignedOut>
+                                        <SignInButton mode="modal">
+                                            <button className="btn-secondary px-4 py-2 text-xs flex items-center gap-1.5">
+                                                เข้าสู่ระบบเพื่อเพิ่ม
+                                            </button>
+                                        </SignInButton>
+                                    </SignedOut>
+                                </>
                             )}
                         </div>
 
@@ -192,9 +238,11 @@ export default function EventPage() {
                                             <span className="font-bold tabular-nums">
                                                 {expense.amount.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                                             </span>
-                                            <button className="btn-ghost p-1 text-danger" onClick={() => handleDeleteExpense(expense.id)}>
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <SignedIn>
+                                                <button className="btn-ghost p-1 text-danger" onClick={() => handleDeleteExpense(expense.id)}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </SignedIn>
                                         </div>
                                     </div>
                                 ))}

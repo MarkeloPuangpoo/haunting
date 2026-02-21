@@ -1,0 +1,24 @@
+{
+    "name": "HarnTung - หารตังค์สุดแฟร์",
+    "short_name": "HarnTung",
+    "description": "แอปหารเงินและสรุปยอดค่าใช้จ่ายสำหรับกลุ่มเพื่อน พร้อมสแกน QR จ่ายเงินทันที",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "theme_color": "#ff512f",
+    "background_color": "#111111",
+    "display": "standalone",
+    "orientation": "portrait",
+    "start_url": "/dashboard",
+    "id": "/"
+}

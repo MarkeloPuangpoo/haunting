@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { Plus, X, User, CreditCard } from 'lucide-react';
 import type { Member } from '@/lib/types';
+import { SignedIn } from '@clerk/nextjs';
 
 interface MemberListProps {
     members: Member[];
@@ -60,22 +61,26 @@ export default function MemberList({
                         </div>
 
                         {editable && (
-                            <button className="btn-ghost p-1.5" onClick={() => onRemoveMember(member.id)}>
-                                <X size={16} />
-                            </button>
+                            <SignedIn>
+                                <button className="btn-ghost p-1.5" onClick={() => onRemoveMember(member.id)}>
+                                    <X size={16} />
+                                </button>
+                            </SignedIn>
                         )}
                     </div>
                 ))}
             </div>
 
             {editable && !showForm && (
-                <button
-                    className="btn-secondary mt-3 w-full flex items-center justify-center gap-2"
-                    onClick={() => setShowForm(true)}
-                >
-                    <Plus size={16} />
-                    เพิ่มสมาชิก
-                </button>
+                <SignedIn>
+                    <button
+                        className="btn-secondary mt-3 w-full flex items-center justify-center gap-2"
+                        onClick={() => setShowForm(true)}
+                    >
+                        <Plus size={16} />
+                        เพิ่มสมาชิก
+                    </button>
+                </SignedIn>
             )}
 
             {editable && showForm && (

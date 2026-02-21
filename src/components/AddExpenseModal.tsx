@@ -4,6 +4,9 @@ import { useState, type FormEvent } from 'react';
 import { X, Receipt, Users, Hash } from 'lucide-react';
 import type { Member, SplitMethod } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useAuth } from '@clerk/nextjs';
+import { createClerkSupabaseClient } from '@/lib/supabaseClient';
 
 interface AddExpenseModalProps {
     eventId: string;
@@ -19,6 +22,7 @@ const SPLIT_METHODS: { value: SplitMethod; label: string; icon: React.ReactNode 
 ];
 
 export default function AddExpenseModal({ eventId, members, onClose, onAdded }: AddExpenseModalProps) {
+    const { getToken } = useAuth();
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [paidBy, setPaidBy] = useState(members[0]?.id || '');
@@ -84,22 +88,29 @@ export default function AddExpenseModal({ eventId, members, onClose, onAdded }: 
         setError('');
 
         try {
-            const { data: expense, error: expError } = await supabase
+            const token = await getToken({ template: 'supabase' });
+            if (!token) throw new Error('กรุณาเข้าสู่ระบบก่อน');
+            const supabaseAuth = createClerkSupabaseClient(token);
+
+            const { data: expense, error: expError } = await supabaseAuth
                 .from('expenses')
                 .insert({ event_id: eventId, paid_by: paidBy, description: description.trim(), amount: totalAmount, split_method: splitMethod })
                 .select()
                 .single();
             if (expError) throw expError;
 
-            const { error: splitError } = await supabase
+            const { error: splitError } = await supabaseAuth
                 .from('expense_splits')
                 .insert(splits.map((s) => ({ expense_id: expense.id, ...s })));
             if (splitError) throw splitError;
 
+            toast.success('บันทึกค่าใช้จ่ายสำเร็จ!');
             onAdded();
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
+            const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาด';
+            setError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }

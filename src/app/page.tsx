@@ -2,11 +2,17 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { ArrowRight, Plus, X, Sparkles, Split, QrCode, Calculator } from 'lucide-react';
+import { toast } from 'sonner';
+import { SignInButton, SignedIn, SignedOut, UserButton, useAuth } from '@clerk/nextjs';
+import { createClerkSupabaseClient } from '@/lib/supabaseClient';
+import Link from 'next/link';
+import Image from 'next/image';
+import Footer from '@/components/Footer';
 
 export default function HomePage() {
   const router = useRouter();
+  const { getToken, userId } = useAuth();
   const [eventName, setEventName] = useState('');
   const [memberNames, setMemberNames] = useState(['', '']);
   const [loading, setLoading] = useState(false);
@@ -36,9 +42,14 @@ export default function HomePage() {
     setError('');
 
     try {
+      const token = await getToken({ template: 'supabase' });
+      if (!token) throw new Error('กรุณาเข้าสู่ระบบก่อนสร้างวง');
+
+      const supabase = createClerkSupabaseClient(token);
+
       const { data: event, error: eventError } = await supabase
         .from('events')
-        .insert({ name: eventName.trim() })
+        .insert({ name: eventName.trim(), owner_id: userId })
         .select()
         .single();
       if (eventError) throw eventError;
@@ -48,6 +59,7 @@ export default function HomePage() {
         .insert(validNames.map((name) => ({ event_id: event.id, name: name.trim() })));
       if (memberError) throw memberError;
 
+      toast.success('สร้างวงสำเร็จแล้ว 🎉');
       router.push(`/event/${event.id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด กรุณาลองใหม่');
@@ -57,11 +69,32 @@ export default function HomePage() {
   };
 
   return (
-    <div className="mesh-bg min-h-dvh">
-      <div className="max-w-[960px] mx-auto px-6 pt-16 pb-10">
+    <div className="mesh-bg min-h-dvh flex flex-col">
+      {/* Header with Auth */}
+      <header className="w-full max-w-[960px] mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="font-bold text-lg tracking-tight flex items-center gap-2">
+          <Image src="/icon.png" width={28} height={28} alt="HarnTung Logo" className="rounded-md shadow-sm" />
+          HarnTung
+        </div>
+        <div className="flex items-center gap-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="btn-secondary text-sm px-4 py-2">เข้าสู่ระบบ</button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <Link href="/dashboard" className="text-sm font-medium text-txt-secondary hover:text-txt-primary transition-colors">
+              วงของฉัน
+            </Link>
+            <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-9 h-9" } }} />
+          </SignedIn>
+        </div>
+      </header>
+
+      <div className="max-w-[960px] mx-auto px-6 pt-10 pb-10 flex-1">
         <div className="text-center mb-12">
-          <div className="float-element w-[72px] h-[72px] mx-auto mb-6 rounded-3xl bg-[image:var(--accent-gradient)] flex items-center justify-center shadow-[var(--shadow-glow)]">
-            <Split size={32} color="white" />
+          <div className="float-element w-[80px] h-[80px] mx-auto mb-6 rounded-[1.75rem] flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden bg-white">
+            <Image src="/icon.png" width={80} height={80} alt="HarnTung Logo" className="object-cover" />
           </div>
 
           <h1 className="text-[clamp(2rem,5vw,3.2rem)] font-extrabold tracking-tight leading-tight mb-3">
@@ -144,16 +177,24 @@ export default function HomePage() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base" disabled={loading}>
-            {loading ? 'กำลังสร้าง...' : 'สร้างวง'}
-            {!loading && <ArrowRight size={18} />}
-          </button>
+          <SignedIn>
+            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base" disabled={loading}>
+              {loading ? 'กำลังสร้าง...' : 'สร้างวง'}
+              {!loading && <ArrowRight size={18} />}
+            </button>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button type="button" className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base">
+                เข้าสู่ระบบเพื่อสร้างวง
+                <ArrowRight size={18} />
+              </button>
+            </SignInButton>
+          </SignedOut>
         </form>
-
-        <p className="text-center mt-12 text-xs text-txt-tertiary">
-          HarnTung — Built with Next.js + Supabase
-        </p>
       </div>
+
+      <Footer />
     </div>
   );
 }

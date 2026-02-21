@@ -4,6 +4,7 @@ export interface Event {
   id: string;
   name: string;
   created_at: string;
+  owner_id?: string;
 }
 
 export interface Member {
